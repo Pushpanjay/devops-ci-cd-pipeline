@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "pushpanjay/devops-app"
-        IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -14,10 +13,16 @@ pipeline {
             }
         }
 
-        stage('Build + SonarQube') {
+        stage('Build & Test') {
+            steps {
+                sh 'mvn clean verify'
+            }
+        }
+
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-server') {
-                    sh 'mvn clean verify sonar:sonar'
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
@@ -32,11 +37,17 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE:$IMAGE_TAG .'
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
 
-        stage('Docker Login & Push') {
+        stage('Trivy Scan') {
+            steps {
+                sh 'trivy image --exit-code 1 --severity CRITICAL,HIGH $DOCKER_IMAGE'
+            }
+        }
+
+        stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-creds',
@@ -45,8 +56,7 @@ pipeline {
                 )]) {
                     sh '''
                     echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    docker push $DOCKER_IMAGE:$IMAGE_TAG
-                    docker logout
+                    docker push $DOCKER_IMAGE
                     '''
                 }
             }
@@ -55,10 +65,10 @@ pipeline {
 
     post {
         success {
-            echo "Pipeline succeeded. Image pushed: ${DOCKER_IMAGE}:${IMAGE_TAG}"
+            echo 'Pipeline SUCCESS'
         }
         failure {
-            echo 'Pipeline failed. Check logs.'
+            echo 'Pipeline FAILED'
         }
     }
 }
