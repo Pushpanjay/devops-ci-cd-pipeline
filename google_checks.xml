@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+
+    <property name="severity" value="warning"/>
+
+    <module name="TreeWalker">
+
+        <!-- Naming -->
+        <module name="MethodName"/>
+        <module name="VariableName"/>
+        <module name="ClassName"/>
+
+        <!-- Clean code -->
+        <module name="UnusedImports"/>
+        <module name="EmptyBlock"/>
+
+        <!-- Formatting -->
+        <module name="WhitespaceAfter"/>
+        <module name="WhitespaceAround"/>
+
+    </module>
+
+</module>
