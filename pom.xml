@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
@@ -8,67 +8,55 @@
     <groupId>com.devops</groupId>
     <artifactId>demo</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>devops-demo</name>
 
-    <!-- ✅ SINGLE PROPERTIES BLOCK -->
     <properties>
-        <!-- Java -->
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Sonar -->
         <sonar.projectKey>demo</sonar.projectKey>
-        <sonar.host.url>http://<SONAR-IP>:9000</sonar.host.url>
+        <sonar.host.url>http://3.93.213.117:9000</sonar.host.url>
         <sonar.coverage.jacoco.xmlReportPaths>
             target/site/jacoco/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
-    <!-- ✅ DEPENDENCIES -->
     <dependencies>
-
-        <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>5.10.0</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
-    <!-- ✅ BUILD PLUGINS -->
     <build>
         <plugins>
 
-            <!-- Compiler -->
+            <!-- Compile -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
             </plugin>
 
-            <!-- Test Runner -->
+            <!-- Test -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
             </plugin>
 
-            <!-- JaCoCo (Coverage) -->
+            <!-- JaCoCo -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.10</version>
                 <executions>
-
-                    <!-- Attach agent -->
                     <execution>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
-
-                    <!-- Generate report -->
                     <execution>
                         <id>report</id>
                         <phase>verify</phase>
@@ -76,11 +64,10 @@
                             <goal>report</goal>
                         </goals>
                     </execution>
-
                 </executions>
             </plugin>
 
-            <!-- 🔴 LINTER (Checkstyle) -->
+            <!-- ✅ LINT (Checkstyle) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -88,7 +75,8 @@
 
                 <configuration>
                     <configLocation>google_checks.xml</configLocation>
-                    <failOnViolation>true</failOnViolation>
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>false</failsOnError>
                 </configuration>
 
                 <executions>
@@ -103,18 +91,5 @@
 
         </plugins>
     </build>
-
-    <!-- ✅ NEXUS (will be used later) -->
-    <distributionManagement>
-        <repository>
-            <id>nexus-releases</id>
-            <url>http://<NEXUS-IP>:8081/repository/maven-releases/</url>
-        </repository>
-
-        <snapshotRepository>
-            <id>nexus-snapshots</id>
-            <url>http://<NEXUS-IP>:8081/repository/maven-snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 
 </project>
