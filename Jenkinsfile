@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "pushpanjay/devops-app"
+        DOCKER_IMAGE = "pushpanjay/devops-app" 
     }
 
     stages {
@@ -16,6 +16,14 @@ pipeline {
         stage('Build') {
             steps {
                 sh 'mvn clean package'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh 'mvn sonar:sonar'
+                }
             }
         }
 
