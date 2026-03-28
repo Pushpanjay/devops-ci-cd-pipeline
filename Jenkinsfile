@@ -1,10 +1,10 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'maven3'   // Ensure configured in Jenkins
-        jdk 'jdk17'
-    }
+    // tools {
+    //     maven 'maven3'   // Ensure configured in Jenkins
+    //     jdk 'jdk17'
+    // }
 
     environment {
         DOCKER_IMAGE = "pushpanjay/devops-app"
