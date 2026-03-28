@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'maven3'   // Ensure configured in Jenkins
+        jdk 'jdk17'
+    }
+
     environment {
         DOCKER_IMAGE = "pushpanjay/devops-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
@@ -8,7 +13,7 @@ pipeline {
 
     stages {
 
-        // ✅ CHECKOUT (FIXED)
+        // ✅ CHECKOUT
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -16,17 +21,24 @@ pipeline {
             }
         }
 
-        // 🔴 LINT (EARLY FAILURE)
+        // 🔴 LINT (runs ONLY here, not in build lifecycle)
         stage('Lint Check') {
             steps {
                 sh 'mvn checkstyle:check'
             }
         }
 
-        // ✅ BUILD + TEST + JACOCO
-        stage('Build & Test') {
+        // ✅ BUILD (no duplicate lint execution)
+        stage('Build') {
             steps {
-                sh 'mvn clean install'
+                sh 'mvn clean install -DskipTests'
+            }
+        }
+
+        // ✅ TEST
+        stage('Test') {
+            steps {
+                sh 'mvn test'
             }
         }
 
@@ -74,7 +86,6 @@ pipeline {
                     usernameVariable: 'USER',
                     passwordVariable: 'PASS'
                 )]) {
-
                     sh '''
                     echo $PASS | docker login -u $USER --password-stdin
                     docker push $DOCKER_IMAGE:$IMAGE_TAG
@@ -83,7 +94,7 @@ pipeline {
             }
         }
 
-        // 🚀 DEPLOY (DOCKER)
+        // 🚀 DEPLOY
         stage('Deploy') {
             steps {
                 sh '''
