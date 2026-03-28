@@ -8,25 +8,29 @@ pipeline {
 
     stages {
 
+        // ✅ CHECKOUT (FIXED)
         stage('Checkout') {
             steps {
-                git 'https://github.com/Pushpanjay/devops-ci-cd-pipeline.git'
+                git branch: 'main',
+                    url: 'https://github.com/Pushpanjay/devops-ci-cd-pipeline.git'
             }
         }
 
-        // 🔴 LINTER STAGE
+        // 🔴 LINT (EARLY FAILURE)
         stage('Lint Check') {
             steps {
                 sh 'mvn checkstyle:check'
             }
         }
 
+        // ✅ BUILD + TEST + JACOCO
         stage('Build & Test') {
             steps {
                 sh 'mvn clean install'
             }
         }
 
+        // ✅ SONAR ANALYSIS
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-server') {
@@ -35,6 +39,7 @@ pipeline {
             }
         }
 
+        // ✅ QUALITY GATE
         stage('Quality Gate') {
             steps {
                 timeout(time: 2, unit: 'MINUTES') {
@@ -43,24 +48,7 @@ pipeline {
             }
         }
 
-        // 🔵 Nexus Upload
-        // stage('Upload to Nexus') {
-        //     steps {
-        //         withCredentials([usernamePassword(
-        //             credentialsId: 'nexus-creds',
-        //             usernameVariable: 'NEXUS_USER',
-        //             passwordVariable: 'NEXUS_PASS'
-        //         )]) {
-
-        //             sh '''
-        //             mvn deploy \
-        //             -Dnexus.username=$NEXUS_USER \
-        //             -Dnexus.password=$NEXUS_PASS
-        //             '''
-        //         }
-        //     }
-        // }
-
+        // 🐳 DOCKER BUILD
         stage('Docker Build') {
             steps {
                 sh '''
@@ -69,6 +57,7 @@ pipeline {
             }
         }
 
+        // 🔐 TRIVY SCAN
         stage('Trivy Scan') {
             steps {
                 sh '''
@@ -77,6 +66,7 @@ pipeline {
             }
         }
 
+        // 🚀 DOCKER PUSH
         stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(
@@ -93,7 +83,8 @@ pipeline {
             }
         }
 
-        stage('Deploy (Docker)') {
+        // 🚀 DEPLOY (DOCKER)
+        stage('Deploy') {
             steps {
                 sh '''
                 docker stop devops-app || true
