@@ -83,26 +83,26 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'docker-creds',
-                    usernameVariable: 'USER',
-                    passwordVariable: 'PASS'
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh '''
-                    echo $PASS | docker login -u $USER --password-stdin
-                    docker push $DOCKER_IMAGE:$IMAGE_TAG
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    docker push pushpanjay/devops-app:${BUILD_NUMBER}
                     '''
                 }
             }
         }
 
         // 🚀 DEPLOY
-        stage('Deploy') {
-            steps {
-                sh '''
-                docker stop devops-app || true
-                docker rm devops-app || true
-                docker run -d -p 8081:8080 --name devops-app $DOCKER_IMAGE:$IMAGE_TAG
-                '''
-            }
-        }
+        // stage('Deploy') {
+        //     steps {
+        //         sh '''
+        //         docker stop devops-app || true
+        //         docker rm devops-app || true
+        //         docker run -d -p 8081:8080 --name devops-app $DOCKER_IMAGE:$IMAGE_TAG
+        //         '''
+        //     }
+        // }
     }
 }
