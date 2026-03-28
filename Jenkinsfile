@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "pushpanjay/devops-app" 
+        DOCKER_IMAGE = "pushpanjay/devops-app"
+        IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -13,20 +14,13 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            steps {
-                sh 'mvn clean verify'
-            }
-        }
-
-        stage('SonarQube Analysis') {
+        stage('Build + SonarQube') {
             steps {
                 withSonarQubeEnv('sonar-server') {
-                    sh 'mvn sonar:sonar'
+                    sh 'mvn clean verify sonar:sonar'
                 }
             }
         }
-
 
         stage('Quality Gate') {
             steps {
@@ -38,7 +32,7 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh 'docker build -t $DOCKER_IMAGE:$IMAGE_TAG .'
             }
         }
 
@@ -51,7 +45,8 @@ pipeline {
                 )]) {
                     sh '''
                     echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    docker push $DOCKER_IMAGE
+                    docker push $DOCKER_IMAGE:$IMAGE_TAG
+                    docker logout
                     '''
                 }
             }
@@ -60,7 +55,7 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline executed successfully!'
+            echo "Pipeline succeeded. Image pushed: ${DOCKER_IMAGE}:${IMAGE_TAG}"
         }
         failure {
             echo 'Pipeline failed. Check logs.'
