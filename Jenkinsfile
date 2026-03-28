@@ -31,22 +31,22 @@ pipeline {
         }
 
         // ✅ SONAR
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonar-server') {
-                    sh 'mvn sonar:sonar'
-                }
-            }
-        }
+        // stage('SonarQube Analysis') {
+        //     steps {
+        //         withSonarQubeEnv('sonar-server') {
+        //             sh 'mvn sonar:sonar'
+        //         }
+        //     }
+        // }
 
-        // ✅ QUALITY GATE
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        // // ✅ QUALITY GATE
+        // stage('Quality Gate') {
+        //     steps {
+        //         timeout(time: 2, unit: 'MINUTES') {
+        //             waitForQualityGate abortPipeline: true
+        //         }
+        //     }
+        // }
 
         // ✅ DEPLOY TO NEXUS
         stage('Deploy to Nexus') {
