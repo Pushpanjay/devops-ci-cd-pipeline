@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "pushpanjay/devops-app"
+        IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -29,7 +30,7 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
+                timeout(time: 3, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -37,13 +38,13 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh 'docker build -t $DOCKER_IMAGE:$IMAGE_TAG .'
             }
         }
 
         stage('Trivy Scan') {
             steps {
-                sh 'trivy image --exit-code 1 --severity CRITICAL,HIGH $DOCKER_IMAGE'
+                sh 'trivy image --exit-code 1 --severity CRITICAL,HIGH $DOCKER_IMAGE:$IMAGE_TAG'
             }
         }
 
@@ -56,7 +57,7 @@ pipeline {
                 )]) {
                     sh '''
                     echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    docker push $DOCKER_IMAGE
+                    docker push $DOCKER_IMAGE:$IMAGE_TAG
                     '''
                 }
             }
@@ -65,10 +66,10 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline SUCCESS'
+            echo "SUCCESS: Image pushed -> $DOCKER_IMAGE:$IMAGE_TAG"
         }
         failure {
-            echo 'Pipeline FAILED'
+            echo "FAILED: Check logs"
         }
     }
 }
