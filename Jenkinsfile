@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "YOUR_DOCKERHUB_USERNAME/devops-app"
+        DOCKER_IMAGE = "pushpanjay/devops-app"
     }
 
     stages {
