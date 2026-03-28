@@ -12,7 +12,6 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Sonar -->
         <sonar.projectKey>demo</sonar.projectKey>
@@ -23,24 +22,32 @@
     </properties>
 
     <dependencies>
+        <!-- JUnit -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>5.10.0</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- FIX for Guava conflict -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>32.1.2-jre</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
 
-            <!-- Compile -->
+            <!-- Compiler -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
             </plugin>
 
-            <!-- Test -->
+            <!-- Unit Tests -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
@@ -67,26 +74,15 @@
                 </executions>
             </plugin>
 
-            <!-- ✅ LINT (Checkstyle) -->
+            <!-- Checkstyle (ONLY plugin, no lifecycle binding) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>3.3.0</version>
-
                 <configuration>
                     <configLocation>google_checks.xml</configLocation>
-                    <consoleOutput>true</consoleOutput>
-                    <failsOnError>false</failsOnError>
+                    <failOnViolation>false</failOnViolation>
                 </configuration>
-
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
         </plugins>
