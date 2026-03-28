@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    // tools {
-    //     maven 'maven3'   // Ensure configured in Jenkins
-    //     jdk 'jdk17'
-    // }
-
     environment {
         DOCKER_IMAGE = "pushpanjay/devops-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
@@ -21,28 +16,21 @@ pipeline {
             }
         }
 
-        // 🔴 LINT (runs ONLY here, not in build lifecycle)
+        // ✅ LINT
         stage('Lint Check') {
             steps {
                 sh 'mvn checkstyle:check'
             }
         }
 
-        // ✅ BUILD (no duplicate lint execution)
-        stage('Build') {
+        // ✅ BUILD + TEST
+        stage('Build & Test') {
             steps {
-                sh 'mvn clean install -DskipTests'
+                sh 'mvn clean verify'
             }
         }
 
-        // ✅ TEST
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-
-        // ✅ SONAR ANALYSIS
+        // ✅ SONAR
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-server') {
@@ -60,6 +48,21 @@ pipeline {
             }
         }
 
+        // ✅ DEPLOY TO NEXUS
+        stage('Deploy to Nexus') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'nexus-creds',
+                    usernameVariable: 'NEXUS_USER',
+                    passwordVariable: 'NEXUS_PASS'
+                )]) {
+                    sh '''
+                    mvn deploy -Dnexus.username=$NEXUS_USER -Dnexus.password=$NEXUS_PASS
+                    '''
+                }
+            }
+        }
+
         // 🐳 DOCKER BUILD
         stage('Docker Build') {
             steps {
@@ -69,7 +72,7 @@ pipeline {
             }
         }
 
-        // 🔐 TRIVY SCAN
+        // 🔐 TRIVY
         stage('Trivy Scan') {
             steps {
                 sh '''
@@ -88,21 +91,10 @@ pipeline {
                 )]) {
                     sh '''
                     echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push pushpanjay/devops-app:${BUILD_NUMBER}
+                    docker push $DOCKER_IMAGE:$IMAGE_TAG
                     '''
                 }
             }
         }
-
-        // 🚀 DEPLOY
-        // stage('Deploy') {
-        //     steps {
-        //         sh '''
-        //         docker stop devops-app || true
-        //         docker rm devops-app || true
-        //         docker run -d -p 8081:8080 --name devops-app $DOCKER_IMAGE:$IMAGE_TAG
-        //         '''
-        //     }
-        // }
     }
 }
