@@ -23,9 +23,21 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        //  REPLACED BUILD STAGE
+        stage('Build, Test & SonarQube Analysis') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                withSonarQubeEnv('sonar-server') {
+                    sh 'mvn clean verify sonar:sonar'
+                }
+            }
+        }
+
+        //  MUST come immediately after sonar
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
