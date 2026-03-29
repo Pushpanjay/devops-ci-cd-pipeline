@@ -23,21 +23,16 @@ pipeline {
             }
         }
 
-        //  BUILD + TEST
-        stage('Build & Test') {
-            steps {
-                sh 'mvn clean verify'
-            }
-        }
-
-         // SONAR
-        stage('SonarQube Analysis') {
+        //  BUILD + TEST + SONAR (merged for efficiency)
+        stage('Build, Test & SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    sh """
-                    mvn clean verify sonar:sonar \
-                    -Dsonar.login=$SONAR_TOKEN
-                    """
+                    withSonarQubeEnv('SonarQube') {
+                        sh """
+                        mvn clean verify sonar:sonar \
+                        -Dsonar.login=$SONAR_TOKEN
+                        """
+                    }
                 }
             }
         }
@@ -45,26 +40,11 @@ pipeline {
         //  QUALITY GATE
         stage('Quality Gate') {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
-
-        //  DEPLOY TO NEXUS
-        // stage('Deploy to Nexus') {
-        //     steps {
-        //         withCredentials([usernamePassword(
-        //             credentialsId: 'nexus-creds',
-        //             usernameVariable: 'NEXUS_USER',
-        //             passwordVariable: 'NEXUS_PASS'
-        //         )]) {
-        //             sh '''
-        //             mvn deploy -Dnexus.username=$NEXUS_USER -Dnexus.password=$NEXUS_PASS
-        //             '''
-        //         }
-        //     }
-        // }
 
         //  DOCKER BUILD
         stage('Docker Build') {
@@ -75,7 +55,7 @@ pipeline {
             }
         }
 
-        //  TRIVY
+        //  TRIVY SCAN
         stage('Trivy Scan') {
             steps {
                 sh '''
@@ -99,5 +79,22 @@ pipeline {
                 }
             }
         }
+
+        //  DEPLOY TO NEXUS (optional - uncomment when ready)
+        /*
+        stage('Deploy to Nexus') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'nexus-creds',
+                    usernameVariable: 'NEXUS_USER',
+                    passwordVariable: 'NEXUS_PASS'
+                )]) {
+                    sh '''
+                    mvn deploy -Dnexus.username=$NEXUS_USER -Dnexus.password=$NEXUS_PASS
+                    '''
+                }
+            }
+        }
+        */
     }
 }
