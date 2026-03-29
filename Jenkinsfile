@@ -27,9 +27,7 @@ pipeline {
         stage('Build, Test & SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-server') {
-                    sh '''
-                    mvn clean verify sonar:sonar
-                    '''
+                    sh 'mvn clean verify sonar:sonar'
                 }
             }
         }
@@ -46,18 +44,14 @@ pipeline {
         // DOCKER BUILD
         stage('Docker Build') {
             steps {
-                sh '''
-                docker build -t $DOCKER_IMAGE:$IMAGE_TAG .
-                '''
+                sh 'docker build -t $DOCKER_IMAGE:$IMAGE_TAG .'
             }
         }
 
         // TRIVY SCAN
         stage('Trivy Scan') {
             steps {
-                sh '''
-                trivy image --exit-code 1 --severity CRITICAL,HIGH $DOCKER_IMAGE:$IMAGE_TAG
-                '''
+                sh 'trivy image --exit-code 1 --severity CRITICAL,HIGH $DOCKER_IMAGE:$IMAGE_TAG'
             }
         }
 
@@ -72,26 +66,22 @@ pipeline {
                     sh '''
                     echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                     docker push $DOCKER_IMAGE:$IMAGE_TAG
+                    docker logout
                     '''
                 }
             }
         }
 
-        // DEPLOY TO NEXUS (optional)
-        /*
+        //  FIXED: DEPLOY TO NEXUS
         stage('Deploy to Nexus') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'nexus-creds',
-                    usernameVariable: 'NEXUS_USER',
-                    passwordVariable: 'NEXUS_PASS'
+                configFileProvider([configFile(
+                    fileId: 'nexus-settings',
+                    variable: 'MAVEN_SETTINGS'
                 )]) {
-                    sh '''
-                    mvn deploy -Dnexus.username=$NEXUS_USER -Dnexus.password=$NEXUS_PASS
-                    '''
+                    sh 'mvn clean deploy --settings $MAVEN_SETTINGS'
                 }
             }
         }
-        */
     }
 }
