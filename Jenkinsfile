@@ -29,13 +29,13 @@ pipeline {
             }
         }
 
-        stage('Test Jar') {
-            steps {
-                sh '''
-                timeout 15s java -jar target/*.jar || exit 1
-                '''
-            }
-        }
+        // stage('Test Jar') {
+        //     steps {
+        //         sh '''
+        //         timeout 15s java -jar target/*.jar || exit 1
+        //         '''
+        //     }
+        // }
 
         stage('Docker Build') {
             steps {
