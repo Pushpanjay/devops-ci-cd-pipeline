@@ -8,7 +8,6 @@ pipeline {
 
     stages {
 
-        // CHECKOUT
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -16,14 +15,12 @@ pipeline {
             }
         }
 
-        // LINT
         stage('Lint Check') {
             steps {
                 sh 'mvn checkstyle:check'
             }
         }
 
-        // BUILD + TEST + SONAR
         stage('Build, Test & SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-server') {
@@ -32,7 +29,6 @@ pipeline {
             }
         }
 
-        // QUALITY GATE
         stage('Quality Gate') {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
@@ -41,21 +37,30 @@ pipeline {
             }
         }
 
-        // DOCKER BUILD
+        // ✅ FIXED POSITION
+        stage('Deploy to Nexus') {
+            steps {
+                configFileProvider([configFile(
+                    fileId: 'nexus-settings',
+                    variable: 'MAVEN_SETTINGS'
+                )]) {
+                    sh 'mvn deploy -DskipTests -s $MAVEN_SETTINGS'
+                }
+            }
+        }
+
         stage('Docker Build') {
             steps {
                 sh 'docker build -t $DOCKER_IMAGE:$IMAGE_TAG .'
             }
         }
 
-        // TRIVY SCAN
         stage('Trivy Scan') {
             steps {
                 sh 'trivy image --exit-code 1 --severity CRITICAL,HIGH $DOCKER_IMAGE:$IMAGE_TAG'
             }
         }
 
-        // DOCKER PUSH
         stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(
@@ -71,17 +76,11 @@ pipeline {
                 }
             }
         }
+    }
 
-        //  FIXED: DEPLOY TO NEXUS
-        stage('Deploy to Nexus') {
-            steps {
-                configFileProvider([configFile(
-                    fileId: 'nexus-settings',
-                    variable: 'MAVEN_SETTINGS'
-                )]) {
-                    sh 'mvn clean deploy --settings $MAVEN_SETTINGS'
-                }
-            }
+    post {
+        always {
+            cleanWs()
         }
     }
 }
