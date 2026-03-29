@@ -63,13 +63,17 @@ pipeline {
             steps {
                 sh '''
                 aws eks --region $AWS_REGION update-kubeconfig --name $CLUSTER_NAME
-
+        
+                kubectl apply -f k8s/namespace.yaml
+                kubectl apply -f k8s/configmap.yaml
+                kubectl apply -f k8s/secret.yaml
+        
                 kubectl apply -f k8s/deployment.yaml
                 kubectl apply -f k8s/service.yaml
-
-                kubectl set image deployment/devops-app devops-app=$DOCKER_IMAGE:$IMAGE_TAG
-
-                kubectl rollout status deployment/devops-app
+        
+                kubectl set image deployment/devops-app devops-app=$DOCKER_IMAGE:$IMAGE_TAG -n devops
+        
+                kubectl rollout status deployment/devops-app -n devops
                 '''
             }
         }
