@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: devops-app
-  namespace: devops
 spec:
   replicas: 2
   selector:
@@ -15,7 +14,7 @@ spec:
     spec:
       containers:
       - name: devops-app
-        image: pushpanjay/devops-app:IMAGE_TAG
+        image: pushpanjay/devops-app:latest
         ports:
         - containerPort: 8080
 
