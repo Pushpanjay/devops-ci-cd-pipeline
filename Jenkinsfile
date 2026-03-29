@@ -8,7 +8,7 @@ pipeline {
 
     stages {
 
-        // ✅ CHECKOUT
+        //  CHECKOUT
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -16,54 +16,54 @@ pipeline {
             }
         }
 
-        // ✅ LINT
+        //  LINT
         stage('Lint Check') {
             steps {
                 sh 'mvn checkstyle:check'
             }
         }
 
-        // ✅ BUILD + TEST
+        //  BUILD + TEST
         stage('Build & Test') {
             steps {
                 sh 'mvn clean verify'
             }
         }
 
-        // ✅ SONAR
-        // stage('SonarQube Analysis') {
-        //     steps {
-        //         withSonarQubeEnv('sonar-server') {
-        //             sh 'mvn sonar:sonar'
-        //         }
-        //     }
-        // }
-
-        // // ✅ QUALITY GATE
-        // stage('Quality Gate') {
-        //     steps {
-        //         timeout(time: 2, unit: 'MINUTES') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
-
-        // ✅ DEPLOY TO NEXUS
-        stage('Deploy to Nexus') {
+         // SONAR
+        stage('SonarQube Analysis') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'nexus-creds',
-                    usernameVariable: 'NEXUS_USER',
-                    passwordVariable: 'NEXUS_PASS'
-                )]) {
-                    sh '''
-                    mvn deploy -Dnexus.username=$NEXUS_USER -Dnexus.password=$NEXUS_PASS
-                    '''
+                withSonarQubeEnv('sonar-server') {
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
 
-        // 🐳 DOCKER BUILD
+        //  QUALITY GATE
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        //  DEPLOY TO NEXUS
+        // stage('Deploy to Nexus') {
+        //     steps {
+        //         withCredentials([usernamePassword(
+        //             credentialsId: 'nexus-creds',
+        //             usernameVariable: 'NEXUS_USER',
+        //             passwordVariable: 'NEXUS_PASS'
+        //         )]) {
+        //             sh '''
+        //             mvn deploy -Dnexus.username=$NEXUS_USER -Dnexus.password=$NEXUS_PASS
+        //             '''
+        //         }
+        //     }
+        // }
+
+        //  DOCKER BUILD
         stage('Docker Build') {
             steps {
                 sh '''
@@ -72,7 +72,7 @@ pipeline {
             }
         }
 
-        // 🔐 TRIVY
+        //  TRIVY
         stage('Trivy Scan') {
             steps {
                 sh '''
@@ -81,7 +81,7 @@ pipeline {
             }
         }
 
-        // 🚀 DOCKER PUSH
+        //  DOCKER PUSH
         stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(
