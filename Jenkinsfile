@@ -13,7 +13,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/Pushpanjay/devops-ci-cd-pipeline.git'
+                    url: 'https://github.com/Pushpanjay/devops-ci-cd-pipeline.git'
             }
         }
 
@@ -29,17 +29,11 @@ pipeline {
             }
         }
 
-        // stage('Test Jar') {
-        //     steps {
-        //         sh '''
-        //         timeout 15s java -jar target/*.jar || exit 1
-        //         '''
-        //     }
-        // }
-
         stage('Docker Build') {
             steps {
-                sh 'docker build --no-cache -t $DOCKER_IMAGE:$IMAGE_TAG .'
+                sh '''
+                docker build -t $DOCKER_IMAGE:$IMAGE_TAG .
+                '''
             }
         }
 
@@ -61,23 +55,34 @@ pipeline {
 
         stage('Deploy to EKS') {
             steps {
-                sh '''
-                aws eks --region $AWS_REGION update-kubeconfig --name $CLUSTER_NAME
-        
-                kubectl apply -f k8s/namespace.yaml
-                kubectl apply -f k8s/configmap.yaml
-                kubectl apply -f k8s/secret.yaml
-        
-                kubectl apply -f k8s/deployment.yaml
-                kubectl apply -f k8s/service.yaml
-        
-                kubectl set image deployment/devops-app devops-app=$DOCKER_IMAGE:$IMAGE_TAG -n devops
-        
-                kubectl rollout status deployment/devops-app -n devops
-                '''
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds'
+                ]]) {
+                    sh '''
+                    set -e
+
+                    echo "Updating kubeconfig..."
+                    aws eks --region $AWS_REGION update-kubeconfig --name $CLUSTER_NAME
+
+                    echo "Applying Kubernetes manifests..."
+                    kubectl apply -f k8s/namespace.yaml
+                    kubectl apply -f k8s/configmap.yaml || true
+                    kubectl apply -f k8s/secret.yaml || true
+
+                    kubectl apply -f k8s/deployment.yaml
+                    kubectl apply -f k8s/service.yaml
+
+                    echo "Updating image..."
+                    kubectl set image deployment/devops-app \
+                    devops-app=$DOCKER_IMAGE:$IMAGE_TAG -n devops
+
+                    echo "Checking rollout..."
+                    kubectl rollout status deployment/devops-app -n devops
+                    '''
+                }
             }
         }
-
     }
 
     post {
