@@ -8,7 +8,7 @@ pipeline {
 
     stages {
 
-        //  CHECKOUT
+        // CHECKOUT
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -16,28 +16,25 @@ pipeline {
             }
         }
 
-        //  LINT
+        // LINT
         stage('Lint Check') {
             steps {
                 sh 'mvn checkstyle:check'
             }
         }
 
-        //  BUILD + TEST + SONAR (merged for efficiency)
+        // BUILD + TEST + SONAR
         stage('Build, Test & SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    withSonarQubeEnv('SonarQube') {
-                        sh """
-                        mvn clean verify sonar:sonar \
-                        -Dsonar.login=$SONAR_TOKEN
-                        """
-                    }
+                withSonarQubeEnv('SonarQube') {
+                    sh '''
+                    mvn clean verify sonar:sonar
+                    '''
                 }
             }
         }
 
-        //  QUALITY GATE
+        // QUALITY GATE
         stage('Quality Gate') {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
@@ -46,7 +43,7 @@ pipeline {
             }
         }
 
-        //  DOCKER BUILD
+        // DOCKER BUILD
         stage('Docker Build') {
             steps {
                 sh '''
@@ -55,7 +52,7 @@ pipeline {
             }
         }
 
-        //  TRIVY SCAN
+        // TRIVY SCAN
         stage('Trivy Scan') {
             steps {
                 sh '''
@@ -64,7 +61,7 @@ pipeline {
             }
         }
 
-        //  DOCKER PUSH
+        // DOCKER PUSH
         stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(
@@ -80,7 +77,7 @@ pipeline {
             }
         }
 
-        //  DEPLOY TO NEXUS (optional - uncomment when ready)
+        // DEPLOY TO NEXUS (optional)
         /*
         stage('Deploy to Nexus') {
             steps {
